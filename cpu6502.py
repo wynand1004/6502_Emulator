@@ -16,7 +16,7 @@ class Mode(Enum):
     INDY = auto()
     
 class CPU():
-    def __init__(self, ram=[x for x in range(0, 65536)]):
+    def __init__(self, ram=[0 for x in range(0, 65536)]):
         self.a = 0
         self.x = 0
         self.y = 0
@@ -48,6 +48,30 @@ class CPU():
         # Set up RAM
         # Note, a real 6502 would not have default RAM
         self.ram = ram
+
+    # Returns the related value depending on the mode
+    def get_value(self, value, mode):
+        if(mode == Mode.IMMEDIATE):
+            return value
+            
+        elif(mode == Mode.ZP):
+            return self.ram[value]
+            
+        elif(mode == Mode.ZPX):
+            return self.ram[value+self.x]
+            
+        elif(mode == Mode.ABS):
+            return value
+            
+        elif(mode == Mode.ABX):
+            return self.ram[value+self.x]
+            
+        elif(mode == Mode.ABY):
+            return self.ram[value+self.y]
+        
+            
+    def decode_opcode(opcode):
+        pass
 
     # Note: INC in implied mode (accumulator) is not part of the orginal 6502 spec
     def inc(self, mode=Mode.IMPLIED, value = 0):
@@ -155,36 +179,31 @@ class CPU():
 
     def nop(self):
         self.pc += 1
+        
+    def lda(self, value, mode=Mode.IMMEDIATE):
+        # Convert value based on mode
+        value = self.get_value(value, mode)
+        self.a = value
+        
+    def sta(self, value, mode=Mode.ABS):
+        value = self.get_value(value, mode)
+        self.ram[value] = self.a
 
-    # Returns the related value depending on the mode
-    def get_value(mode, value):
-        if(mode == Mode.IMMEDIATE):
-            return value
-            
-        elif(mode == Mode.ZP):
-            return self.ram[value]
-            
-        elif(mode == Mode.ZPX):
-            return self.ram[value+self.x]
-            
-        elif(mode == Mode.ABS):
-            return self.ram[value]
-            
-        elif(mode == Mode.ABX):
-            return self.ram[value+self.x]
-            
-        elif(mode == Mode.ABY):
-            return self.ram[value+self.y]
+    def ldx(self, value, mode=Mode.IMMEDIATE):
+        # Convert value based on mode
+        value = self.get_value(value, mode)
+        self.x = value
         
-            
-    def decode_opcode(opcode):
-        pass
+    def stx(self, value, mode=Mode.ABS):
+        value = self.get_value(value, mode)
+        self.ram[value] = self.x
         
-    def show_state(this):
-        print(f"A: {this.a}")
-        print(f"X: {this.x}")
-        print(f"Y: {this.y}")
-        print(f"PC: {this.pc}")
+    def show_state(self):
+        print(f"A: {self.a}")
+        print(f"X: {self.x}")
+        print(f"Y: {self.y}")
+        print(f"PC: {self.pc}")
+        print(self.ram[16384])
 
 
 # Basic testing / example code

@@ -45,7 +45,21 @@ class CPU():
             0xA9: (self.lda, Mode.IMMEDIATE, 2),
             0xE8: (self.inx, Mode.IMPLIED, 1),
             0xC8: (self.iny, Mode.IMPLIED, 1),
-            0x4C: (self.jmp, Mode.ABS, 3)
+            0xAA: (self.tax, Mode.IMPLIED, 1),
+            0x8A: (self.txa, Mode.IMPLIED, 1),
+            0xCA: (self.dex, Mode.IMPLIED, 1),
+            0xA8: (self.tay, Mode.IMPLIED, 1),
+            0x98: (self.tya, Mode.IMPLIED, 1),
+            0x88: (self.dey, Mode.IMPLIED, 1),
+            0xEA: (self.nop, Mode.IMPLIED, 1),
+            0x18: (self.clc, Mode.IMPLIED, 1),
+            0x38: (self.sec, Mode.IMPLIED, 1),
+            0x58: (self.cli, Mode.IMPLIED, 1),
+            0x78: (self.sei, Mode.IMPLIED, 1),
+            0xB8: (self.clv, Mode.IMPLIED, 1),
+            0xD8: (self.cld, Mode.IMPLIED, 1),
+            0xF8: (self.sed, Mode.IMPLIED, 1),
+            0x4C: (self.jmp, Mode.ABS, 0),
         }    
         
         # Set up RAM
@@ -200,7 +214,7 @@ class CPU():
         
     def jmp(self, value, mode=Mode.ABS):
         value = self.get_value(value, mode)
-        self.pc = value - 3 # Ugly hack due to the pc being incremented outside the function
+        self.pc = value
         
     def show_state(self):
         print(f"A: {self.a}")
@@ -224,6 +238,8 @@ class CPU():
             # Execute
             # Get the value from memory and execute with function
             fn(self.get_memory_value(mode), mode)
+            # Update the program counter to the next opcode
+            # Note, 0 is used for jmp as it resets the pc directly
             self.pc += length
 
 # Basic testing / example code
@@ -233,18 +249,41 @@ if __name__ == "__main__":
     
     cpu = CPU()
     cpu.ram[1024] = 0xA9 # LDA IMMEDIATE
-    cpu.ram[1025] = 0x01 # 1
-    cpu.ram[1026] = 0xE8 # INX
-    cpu.ram[1027] = 0xC8 # INY
-    cpu.ram[1028] = 0x4C # JMP 0x0400 (1024)
-    cpu.ram[1029] = 0x00
-    cpu.ram[1030] = 0x40
+    cpu.ram[1025] = 0xFF # FF
+    cpu.ram[1026] = 0xCA # DEX
+    cpu.ram[1027] = 0x88 # DEY
+    cpu.ram[1028] = 0x8A # TXA
+    
+    cpu.ram[1029] = 0xEA # NOP
+    cpu.ram[1030] = 0xEA # NOP
+    cpu.ram[1031] = 0xEA # NOP
+    cpu.ram[1032] = 0xEA # NOP
+    cpu.ram[1033] = 0xEA # NOP
+    cpu.ram[1034] = 0xEA # NOP
+    cpu.ram[1035] = 0xEA # NOP
+    cpu.ram[1036] = 0xEA # NOP
+    cpu.ram[1037] = 0xEA # NOP
+    cpu.ram[1038] = 0xEA # NOP
+    cpu.ram[1039] = 0xEA # NOP
+    cpu.ram[1040] = 0xEA # NOP
+    cpu.ram[1041] = 0xEA # NOP
+    cpu.ram[1042] = 0xEA # NOP
+    cpu.ram[1043] = 0xEA # NOP
+    cpu.ram[1044] = 0xEA # NOP
+    cpu.ram[1045] = 0xEA # NOP
+    
+    cpu.ram[1046] = 0x4C # JMP 0x0402 (1024)
+    cpu.ram[1047] = 0x02
+    cpu.ram[1048] = 0x40
+    
+    cycle = 0
     
     while True:
         cpu.tick()
-        
-        os.system("clear")
-        cpu.show_state()
-        time.sleep(0.1)
+        cycle += 1
+        if cycle % 1 == 0:
+            os.system("clear")
+            cpu.show_state()
+        time.sleep(0.01)
     
 

@@ -43,6 +43,9 @@ class CPU():
         
         self.opcodes = {
             0xA9: (self.lda, Mode.IMMEDIATE, 2),
+            0xAD: (self.lda, Mode.ABS, 3),
+            0xAC: (self.ldy, Mode.ABS, 3),
+            0x8D: (self.sta, Mode.ABS, 3),
             0xE8: (self.inx, Mode.IMPLIED, 1),
             0xC8: (self.iny, Mode.IMPLIED, 1),
             0xAA: (self.tax, Mode.IMPLIED, 1),
@@ -59,7 +62,7 @@ class CPU():
             0xB8: (self.clv, Mode.IMPLIED, 1),
             0xD8: (self.cld, Mode.IMPLIED, 1),
             0xF8: (self.sed, Mode.IMPLIED, 1),
-            0x4C: (self.jmp, Mode.ABS, 0),
+            0x4C: (self.jmp, Mode.ABS, 0)
         }    
         
         # Set up RAM
@@ -68,153 +71,146 @@ class CPU():
 
     # Returns the related value depending on the mode
     # This is for the functions
-    def get_value(self, value, mode):
+    def get_value(self, address, mode):
         if(mode == Mode.IMPLIED):
             return None
-            
-        elif(mode == Mode.IMMEDIATE):
-            return value
-            
-        elif(mode == Mode.ZP):
-            return self.ram[value]
-            
-        elif(mode == Mode.ZPX):
-            return self.ram[value+self.x]
-            
-        elif(mode == Mode.ABS):
-            return value
-            
-        elif(mode == Mode.ABX):
-            return self.ram[value+self.x]
-            
-        elif(mode == Mode.ABY):
-            return self.ram[value+self.y]
+        else:
+            return self.ram[address]
     
     # This is for the decoder
-    def get_memory_value(self, mode):
+    def get_memory_address(self, mode):
         if(mode == Mode.IMPLIED):
             return None
             
         elif(mode == Mode.IMMEDIATE):
             address = self.pc + 1
-            return self.ram[address]
+            return address
             
         elif(mode == Mode.ZP):
-            address = self.ram[self.pc+1]
-            return self.ram[address]
+            address = ram[self.pc + 1]
+            if address > 255:
+                address -= 256
+            return address
             
         elif(mode == Mode.ZPX):
-            address = self.ram[self.pc+1]+self.x
+            address = self.ram[self.pc + 1] + self.x
+            if address > 255:
+                address -= 256
             return self.ram[address]
             
         elif(mode == Mode.ABS):
-            address = self.ram[self.pc+1] + self.ram[self.pc+2] * 16
+            address = self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256)
             return address
             
         elif(mode == Mode.ABX):
-            address = (self.ram[self.pc+1] + self.ram[self.pc+2] * 16) + self.x
-            return self.ram[address]
+            address = self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.x
+            return address
             
         elif(mode == Mode.ABY):
-            address = (self.ram[self.pc+1] + self.ram[self.pc+2] * 16) + self.y
-            return self.ram[address]
+            address = self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.y
+            return address
         
     # Note: INC in implied mode (accumulator) is not part of the orginal 6502 spec
-    def inc(self, value = None, mode = Mode.IMPLIED):
+    def inc(self, address = None, mode = Mode.IMPLIED):
         # Increment accumulator by 1
         self.a += 1
         
         # Roll over 255 -> 0
-        if self.a == 256:
-            self.a = 0
+        if self.a > 255:
+            self.a -= 256
         
-    def inx(self, value = None, mode = Mode.IMPLIED):
+    def inx(self, address = None, mode = Mode.IMPLIED):
         # Increment X by 1
         self.x += 1
         
         # Roll over 255 -> 0
-        if self.x == 256:
-            self.x = 0
+        if self.x > 255:
+            self.x -= 256
     
-    def iny(self, value = None, mode = Mode.IMPLIED):
+    def iny(self, address = None, mode = Mode.IMPLIED):
         # Increment y by 1
         self.y += 1
         
         # Roll over 255 -> 0
-        if self.y == 256:
-            self.y = 0
+        if self.y > 255:
+            self.y -= 256
         
-    def tax(self, value = None, mode = Mode.IMPLIED):
+    def tax(self, address = None, mode = Mode.IMPLIED):
         self.x = self.a
         
-    def txa(self, value = None, mode = Mode.IMPLIED):
+    def txa(self, address = None, mode = Mode.IMPLIED):
         self.a = self.x
         
-    def dex(self, value = None, mode = Mode.IMPLIED):
+    def dex(self, address = None, mode = Mode.IMPLIED):
         self.x -= 1
         
         # Roll over 0 -> 255
         if self.x < 0:
-            self.x = 255
+            self.x += 256
             
-    def tay(self, value = None, mode = Mode.IMPLIED):
+    def tay(self, address = None, mode = Mode.IMPLIED):
         self.y = self.a
         
-    def tya(self, value = None, mode = Mode.IMPLIED):
+    def tya(self, address = None, mode = Mode.IMPLIED):
         self.a = self.y
         
-    def dey(self, value = None, mode = Mode.IMPLIED):
+    def dey(self, address = None, mode = Mode.IMPLIED):
         self.y -= 1
         
         # Roll over 0 -> 255
         if self.y < 0:
-            self.y = 255    
+            self.y += 256    
         
-    def clc(self, value = None, mode = Mode.IMPLIED):
+    def clc(self, address = None, mode = Mode.IMPLIED):
         self.c = False
         
-    def sec(self, value = None, mode = Mode.IMPLIED):
+    def sec(self, address = None, mode = Mode.IMPLIED):
         self.c = True
         
-    def cli(self, value = None, mode = Mode.IMPLIED):
+    def cli(self, address = None, mode = Mode.IMPLIED):
         self.i = False
         
-    def sei(self, value = None, mode = Mode.IMPLIED):
+    def sei(self, address = None, mode = Mode.IMPLIED):
         self.i = True
         
-    def cld(self, value = None, mode = Mode.IMPLIED):
+    def cld(self, address = None, mode = Mode.IMPLIED):
         self.d = False
         
-    def sed(self, value = None, mode = Mode.IMPLIED):
+    def sed(self, address = None, mode = Mode.IMPLIED):
         self.d = True
 
-    def clv(self, value = None, mode = Mode.IMPLIED):
+    def clv(self, address = None, mode = Mode.IMPLIED):
         self.v = False
 
-    def nop(self, value = None, mode = Mode.IMPLIED):
+    def nop(self, address = None, mode = Mode.IMPLIED):
         pass
         
-    def lda(self, value, mode=Mode.IMMEDIATE):
+    def lda(self, address, mode=Mode.IMMEDIATE):
         # Convert value based on mode
-        value = self.get_value(value, mode)
+        value = self.get_value(address, mode)
         self.a = value
         
-    def sta(self, value, mode=Mode.ABS):
-        value = self.get_value(value, mode)
-        self.ram[value] = self.a
+    def sta(self, address, mode=Mode.ABS):
+        self.ram[address] = self.a
 
-    def ldx(self, value, mode=Mode.IMMEDIATE):
+    def ldx(self, address, mode=Mode.IMMEDIATE):
         # Convert value based on mode
-        value = self.get_value(value, mode)
+        value = self.get_value(address, mode)
         self.x = value
         
-    def stx(self, value, mode=Mode.ABS):
-        value = self.get_value(value, mode)
-        self.ram[value] = self.x
+    def ldy(self, address, mode=Mode.IMMEDIATE):
+        # Convert value based on mode
+        value = self.get_value(address, mode)
+        self.y = value
         
-    def jmp(self, value, mode=Mode.ABS):
-        value = self.get_value(value, mode)
-        self.pc = value
+    def stx(self, address, mode=Mode.ABS):
+        self.ram[address] = self.x
+        
+    def jmp(self, address = None, mode=Mode.ABS):
+        # Note, for jmp in ABS mode, we get the memory value directly
+        if not address:
+            address = self.get_memory_address(mode)
+        self.pc = address
         
     def show_state(self):
         print(f"A: {self.a}")
@@ -235,9 +231,10 @@ class CPU():
             mode = self.opcodes[opcode][1]
             length = self.opcodes[opcode][2]
         
+            input(f"opcode: {opcode}  mode: {mode}  address: {self.get_memory_address(mode)}")
             # Execute
             # Get the value from memory and execute with function
-            fn(self.get_memory_value(mode), mode)
+            fn(self.get_memory_address(mode), mode)
             # Update the program counter to the next opcode
             # Note, 0 is used for jmp as it resets the pc directly
             self.pc += length
@@ -248,19 +245,19 @@ if __name__ == "__main__":
     import os
     
     cpu = CPU()
-    cpu.ram[1024] = 0xA9 # LDA IMMEDIATE
-    cpu.ram[1025] = 0xFF # FF
-    cpu.ram[1026] = 0xCA # DEX
-    cpu.ram[1027] = 0x88 # DEY
-    cpu.ram[1028] = 0x8A # TXA
+    cpu.ram[1024] = 0xAD # LDA ABSOLUTE
+    cpu.ram[1025] = 0x19 # $0419 = 1049
+    cpu.ram[1026] = 0x04 # 
+    cpu.ram[1027] = 0xAA # TAX
+    cpu.ram[1028] = 0xE8 # INX
     
-    cpu.ram[1029] = 0xEA # NOP
-    cpu.ram[1030] = 0xEA # NOP
-    cpu.ram[1031] = 0xEA # NOP
-    cpu.ram[1032] = 0xEA # NOP
-    cpu.ram[1033] = 0xEA # NOP
-    cpu.ram[1034] = 0xEA # NOP
-    cpu.ram[1035] = 0xEA # NOP
+    cpu.ram[1029] = 0x8A # TXA
+    cpu.ram[1030] = 0x8D # STA
+    cpu.ram[1031] = 0x1A # $041A = 1050
+    cpu.ram[1032] = 0x04 # 
+    cpu.ram[1033] = 0xAC # LDY
+    cpu.ram[1034] = 0x1A # $041A = 1050
+    cpu.ram[1035] = 0x04 # 
     cpu.ram[1036] = 0xEA # NOP
     cpu.ram[1037] = 0xEA # NOP
     cpu.ram[1038] = 0xEA # NOP
@@ -272,9 +269,14 @@ if __name__ == "__main__":
     cpu.ram[1044] = 0xEA # NOP
     cpu.ram[1045] = 0xEA # NOP
     
-    cpu.ram[1046] = 0x4C # JMP 0x0402 (1024)
-    cpu.ram[1047] = 0x02
-    cpu.ram[1048] = 0x40
+    cpu.ram[1046] = 0x4C # JMP 0x0403 (1027)
+    cpu.ram[1047] = 0x03
+    cpu.ram[1048] = 0x04
+    
+    # Data for testing
+    cpu.ram[1049] = 0xFF
+    cpu.ram[1050] = 0x00
+    
     
     cycle = 0
     

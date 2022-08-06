@@ -42,10 +42,6 @@ class CPU():
         self.pc = 1024
         
         self.opcodes = {
-            0xA9: (self.lda, Mode.IMMEDIATE, 2),
-            0xAD: (self.lda, Mode.ABS, 3),
-            0xAC: (self.ldy, Mode.ABS, 3),
-            0x8D: (self.sta, Mode.ABS, 3),
             0xE8: (self.inx, Mode.IMPLIED, 1),
             0xC8: (self.iny, Mode.IMPLIED, 1),
             0xAA: (self.tax, Mode.IMPLIED, 1),
@@ -54,7 +50,9 @@ class CPU():
             0xA8: (self.tay, Mode.IMPLIED, 1),
             0x98: (self.tya, Mode.IMPLIED, 1),
             0x88: (self.dey, Mode.IMPLIED, 1),
+            
             0xEA: (self.nop, Mode.IMPLIED, 1),
+            
             0x18: (self.clc, Mode.IMPLIED, 1),
             0x38: (self.sec, Mode.IMPLIED, 1),
             0x58: (self.cli, Mode.IMPLIED, 1),
@@ -62,12 +60,38 @@ class CPU():
             0xB8: (self.clv, Mode.IMPLIED, 1),
             0xD8: (self.cld, Mode.IMPLIED, 1),
             0xF8: (self.sed, Mode.IMPLIED, 1),
+
+            0xA9: (self.lda, Mode.IMMEDIATE, 2),
+            0xAD: (self.lda, Mode.ABS, 3),
+            
+            0xAC: (self.ldy, Mode.ABS, 3),
+            
+            0x8D: (self.sta, Mode.ABS, 3),
+
             0x4C: (self.jmp, Mode.ABS, 0)
         }    
-        
+
         # Set up RAM
         # Note, a real 6502 would not have default RAM
         self.ram = ram
+    
+    # Resets all registers to default values
+    def reset(self):
+        self.a = 0
+        self.x = 0
+        self.y = 0
+
+        self.n = False
+        self.v = False
+        self.r = True
+        self.b = False
+        self.d = False
+        self.i = False
+        self.z = False
+        self.c = False
+        
+        self.pc = 1024    
+        
 
     # Returns the related value depending on the mode
     # This is for the functions
@@ -238,6 +262,8 @@ class CPU():
             # Update the program counter to the next opcode
             # Note, 0 is used for jmp as it resets the pc directly
             self.pc += length
+        else:
+            input(f"Unknown Opcode: {opcode} at memory location {self.pc}")
 
 # Basic testing / example code
 if __name__ == "__main__":

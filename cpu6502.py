@@ -62,7 +62,13 @@ class CPU():
             0xF8: (self.sed, Mode.IMPLIED, 1),
 
             0xA9: (self.lda, Mode.IMMEDIATE, 2),
+            0xA5: (self.lda, Mode.ZP, 2),
+            0xB5: (self.lda, Mode.ZPX, 2),
             0xAD: (self.lda, Mode.ABS, 3),
+            0xBD: (self.lda, Mode.ABX, 3),
+            0xB9: (self.lda, Mode.ABY, 3),
+            
+            0xA2: (self.ldx, Mode.IMMEDIATE, 2),
             
             0xAC: (self.ldy, Mode.ABS, 3),
             
@@ -107,8 +113,7 @@ class CPU():
             return None
             
         elif(mode == Mode.IMMEDIATE):
-            address = self.pc + 1
-            return address
+            return self.pc + 1
             
         elif(mode == Mode.ZP):
             address = ram[self.pc + 1]
@@ -118,21 +123,19 @@ class CPU():
             
         elif(mode == Mode.ZPX):
             address = self.ram[self.pc + 1] + self.x
+            input(f"address: {address} self.x: {self.x}")
             if address > 255:
                 address -= 256
             return self.ram[address]
             
         elif(mode == Mode.ABS):
-            address = self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256)
-            return address
+            return self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256)
             
         elif(mode == Mode.ABX):
-            address = self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.x
-            return address
+            return self.ram[self.pc +1 ] + (self.ram[self.pc +2 ] * 256) + self.x
             
         elif(mode == Mode.ABY):
-            address = self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.y
-            return address
+            return self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.y
         
     # Note: INC in implied mode (accumulator) is not part of the orginal 6502 spec
     def inc(self, address = None, mode = Mode.IMPLIED):
@@ -210,25 +213,22 @@ class CPU():
         pass
         
     def lda(self, address, mode=Mode.IMMEDIATE):
-        # Convert value based on mode
-        value = self.get_value(address, mode)
-        self.a = value
-        
-    def sta(self, address, mode=Mode.ABS):
-        self.ram[address] = self.a
+        self.a = self.get_value(address, mode)
 
     def ldx(self, address, mode=Mode.IMMEDIATE):
-        # Convert value based on mode
-        value = self.get_value(address, mode)
-        self.x = value
+        self.x = self.get_value(address, mode)
         
-    def ldy(self, address, mode=Mode.IMMEDIATE):
-        # Convert value based on mode
-        value = self.get_value(address, mode)
-        self.y = value
+    def ldy(self, address, mode=Mode.IMMEDIATE): 
+        self.y = self.get_value(address, mode)
+
+    def sta(self, address, mode=Mode.ABS):
+        self.ram[address] = self.a
         
     def stx(self, address, mode=Mode.ABS):
         self.ram[address] = self.x
+        
+    def sty(self, address, mode=Mode.ABS):
+        self.ram[address] = self.y
         
     def jmp(self, address = None, mode=Mode.ABS):
         # Note, for jmp in ABS mode, we get the memory value directly
@@ -255,7 +255,7 @@ class CPU():
             mode = self.opcodes[opcode][1]
             length = self.opcodes[opcode][2]
         
-            input(f"opcode: {opcode}  mode: {mode}  address: {self.get_memory_address(mode)}")
+            # input(f"opcode: {opcode}  mode: {mode}  address: {self.get_memory_address(mode)}")
             # Execute
             # Get the value from memory and execute with function
             fn(self.get_memory_address(mode), mode)
@@ -263,7 +263,7 @@ class CPU():
             # Note, 0 is used for jmp as it resets the pc directly
             self.pc += length
         else:
-            input(f"Unknown Opcode: {opcode} at memory location {self.pc}")
+            print(f"Unknown Opcode: {opcode} at memory location {self.pc}")
 
 # Basic testing / example code
 if __name__ == "__main__":
@@ -271,19 +271,23 @@ if __name__ == "__main__":
     import os
     
     cpu = CPU()
-    cpu.ram[1024] = 0xAD # LDA ABSOLUTE
-    cpu.ram[1025] = 0x19 # $0419 = 1049
-    cpu.ram[1026] = 0x04 # 
-    cpu.ram[1027] = 0xAA # TAX
-    cpu.ram[1028] = 0xE8 # INX
     
-    cpu.ram[1029] = 0x8A # TXA
-    cpu.ram[1030] = 0x8D # STA
-    cpu.ram[1031] = 0x1A # $041A = 1050
-    cpu.ram[1032] = 0x04 # 
-    cpu.ram[1033] = 0xAC # LDY
-    cpu.ram[1034] = 0x1A # $041A = 1050
-    cpu.ram[1035] = 0x04 # 
+    cpu.ram[32] = 0xFF
+    cpu.ram[33] = 0x20
+
+    cpu.ram[1024] = 0xA2 # LDX #1
+    cpu.ram[1025] = 0x01 # 1
+    cpu.ram[1026] = 0xB5 # LDA ZP X-offset 0x20
+    cpu.ram[1027] = 0x20 # NOP
+    cpu.ram[1028] = 0xEA # NOP
+    
+    cpu.ram[1029] = 0xEA # NOP
+    cpu.ram[1030] = 0xEA # NOP
+    cpu.ram[1031] = 0xEA # NOP
+    cpu.ram[1032] = 0xEA # NOP
+    cpu.ram[1033] = 0xEA # NOP
+    cpu.ram[1034] = 0xEA # NOP
+    cpu.ram[1035] = 0xEA # NOP
     cpu.ram[1036] = 0xEA # NOP
     cpu.ram[1037] = 0xEA # NOP
     cpu.ram[1038] = 0xEA # NOP
@@ -295,13 +299,13 @@ if __name__ == "__main__":
     cpu.ram[1044] = 0xEA # NOP
     cpu.ram[1045] = 0xEA # NOP
     
-    cpu.ram[1046] = 0x4C # JMP 0x0403 (1027)
-    cpu.ram[1047] = 0x03
+    cpu.ram[1046] = 0x4C # JMP 0x0400 (1027)
+    cpu.ram[1047] = 0x00
     cpu.ram[1048] = 0x04
     
     # Data for testing
     cpu.ram[1049] = 0xFF
-    cpu.ram[1050] = 0x00
+    cpu.ram[1050] = 0x10
     
     
     cycle = 0

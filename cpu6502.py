@@ -123,16 +123,15 @@ class CPU():
             
         elif(mode == Mode.ZPX):
             address = self.ram[self.pc + 1] + self.x
-            input(f"address: {address} self.x: {self.x}")
             if address > 255:
                 address -= 256
-            return self.ram[address]
+            return address
             
         elif(mode == Mode.ABS):
             return self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256)
             
         elif(mode == Mode.ABX):
-            return self.ram[self.pc +1 ] + (self.ram[self.pc +2 ] * 256) + self.x
+            return self.ram[self.pc +1] + (self.ram[self.pc +2 ] * 256) + self.x
             
         elif(mode == Mode.ABY):
             return self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.y

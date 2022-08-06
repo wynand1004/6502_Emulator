@@ -9,6 +9,7 @@ class Mode(Enum):
     IMMEDIATE = auto()
     ZP = auto()
     ZPX = auto()
+    ZPY = auto()
     ABS = auto()
     ABX = auto()
     ABY = auto()
@@ -69,13 +70,27 @@ class CPU():
             0xB9: (self.lda, Mode.ABY, 3),
             
             0xA2: (self.ldx, Mode.IMMEDIATE, 2),
+            0xA6: (self.ldx, Mode.ZP, 2),
+            0xB6: (self.ldx, Mode.ZPY, 2),
+            0xAE: (self.ldx, Mode.ABS, 3),
+            0xBE: (self.ldx, Mode.ABY, 3),
             
             0xAC: (self.ldy, Mode.ABS, 3),
             
             0x8D: (self.sta, Mode.ABS, 3),
 
             0x4C: (self.jmp, Mode.ABS, 0)
-        }    
+        } 
+        
+        # Use the opcodes to compile list of commands
+        # Will have to update with mode info
+        self.commands = {}
+        for opcode in self.opcodes:
+            command = self.opcodes[opcode][0].__name__.upper()
+            self.commands[command] = opcode
+
+        print(self.commands)
+        # input("PAUSE")
 
         # Set up RAM
         # Note, a real 6502 would not have default RAM
@@ -126,15 +141,21 @@ class CPU():
             if address > 255:
                 address -= 256
             return address
+
+        elif(mode == Mode.ZPY):
+            address = self.ram[self.pc + 1] + self.y
+            if address > 255:
+                address -= 256
+            return address
             
         elif(mode == Mode.ABS):
             return self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256)
             
         elif(mode == Mode.ABX):
-            return self.ram[self.pc +1] + (self.ram[self.pc +2 ] * 256) + self.x
+            return self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256) + self.x
             
         elif(mode == Mode.ABY):
-            return self.ram[self.pc+1] + (self.ram[self.pc+2] * 256) + self.y
+            return self.ram[self.pc + 1] + (self.ram[self.pc + 2] * 256) + self.y
         
     # Note: INC in implied mode (accumulator) is not part of the orginal 6502 spec
     def inc(self, address = None, mode = Mode.IMPLIED):
@@ -273,12 +294,14 @@ if __name__ == "__main__":
     
     cpu.ram[32] = 0xFF
     cpu.ram[33] = 0x20
+    cpu.ram[34] = 0x30
+    cpu.ram[35] = 0x40
 
     cpu.ram[1024] = 0xA2 # LDX #1
     cpu.ram[1025] = 0x01 # 1
     cpu.ram[1026] = 0xB5 # LDA ZP X-offset 0x20
-    cpu.ram[1027] = 0x20 # NOP
-    cpu.ram[1028] = 0xEA # NOP
+    cpu.ram[1027] = 0x20 # 
+    cpu.ram[1028] = 0xE8 # INX
     
     cpu.ram[1029] = 0xEA # NOP
     cpu.ram[1030] = 0xEA # NOP
@@ -299,12 +322,14 @@ if __name__ == "__main__":
     cpu.ram[1045] = 0xEA # NOP
     
     cpu.ram[1046] = 0x4C # JMP 0x0400 (1027)
-    cpu.ram[1047] = 0x00
+    cpu.ram[1047] = 0x02
     cpu.ram[1048] = 0x04
     
     # Data for testing
     cpu.ram[1049] = 0xFF
     cpu.ram[1050] = 0x10
+    cpu.ram[1051] = 0x20
+    cpu.ram[1052] = 0x30
     
     
     cycle = 0
@@ -315,6 +340,7 @@ if __name__ == "__main__":
         if cycle % 1 == 0:
             os.system("clear")
             cpu.show_state()
+        # input("PAUSE")
         time.sleep(0.01)
     
 

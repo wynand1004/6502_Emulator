@@ -75,9 +75,25 @@ class CPU():
             0xAE: (self.ldx, Mode.ABS, 3),
             0xBE: (self.ldx, Mode.ABY, 3),
             
+            0xA0: (self.ldy, Mode.IMMEDIATE, 2),
+            0xA4: (self.ldy, Mode.ZP, 2),
+            0xB4: (self.ldy, Mode.ZPX, 2),
             0xAC: (self.ldy, Mode.ABS, 3),
+            0xBC: (self.ldy, Mode.ABX, 3),
             
+            0x85: (self.sta, Mode.ZP, 2),
+            0x95: (self.sta, Mode.ZPX, 2),
             0x8D: (self.sta, Mode.ABS, 3),
+            0x9D: (self.sta, Mode.ABX, 3),
+            0x99: (self.sta, Mode.ABY, 3),
+            
+            0x86: (self.stx, Mode.ZP, 2),
+            0x96: (self.stx, Mode.ZPY, 2),
+            0x8E: (self.stx, Mode.ABS, 3),
+            
+            0x84: (self.sty, Mode.ZP, 2),
+            0x94: (self.sty, Mode.ZPX, 2),
+            0x8C: (self.sty, Mode.ABS, 3),
 
             0x4C: (self.jmp, Mode.ABS, 0)
         } 

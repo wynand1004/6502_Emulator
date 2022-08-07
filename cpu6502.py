@@ -17,7 +17,7 @@ class Mode(Enum):
     INDY = auto()
     
 class CPU():
-    def __init__(self, ram=[0 for x in range(0, 65536)]):
+    def __init__(self, pc, ram=[0 for x in range(0, 65536)]):
         self.a = 0
         self.x = 0
         self.y = 0
@@ -40,7 +40,7 @@ class CPU():
         # Carry
         self.c = False
         
-        self.pc = 1024
+        self.pc = pc
         
         self.opcodes = {
             0xE8: (self.inx, Mode.IMPLIED, 1),
@@ -113,7 +113,7 @@ class CPU():
         self.ram = ram
     
     # Resets all registers to default values
-    def reset(self):
+    def reset(self, pc):
         self.a = 0
         self.x = 0
         self.y = 0
@@ -127,7 +127,7 @@ class CPU():
         self.z = False
         self.c = False
         
-        self.pc = 1024    
+        self.pc = pc    
         
 
     # Returns the related value depending on the mode
@@ -306,7 +306,7 @@ if __name__ == "__main__":
     import time
     import os
     
-    cpu = CPU()
+    cpu = CPU(1024)
     
     cpu.ram[32] = 0xFF
     cpu.ram[33] = 0x20

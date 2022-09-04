@@ -5,6 +5,7 @@
 from enum import Enum, auto
 
 class Mode(Enum):
+    ACC = auto()
     IMPLIED = auto()
     IMMEDIATE = auto()
     ZP = auto()
@@ -94,6 +95,12 @@ class CPU():
             0x84: (self.sty, Mode.ZP, 2),
             0x94: (self.sty, Mode.ZPX, 2),
             0x8C: (self.sty, Mode.ABS, 3),
+            
+            0x0A: (self.asl, Mode.ACC, 1),
+            0x06: (self.asl, Mode.ZP, 2),
+            0x16: (self.asl, Mode.ZPX, 2),
+            0x0E: (self.asl, Mode.ABS, 3),
+            0x1E: (self.asl, Mode.ABX, 3),
 
             0x4C: (self.jmp, Mode.ABS, 0)
         } 
@@ -266,6 +273,17 @@ class CPU():
     def sty(self, address, mode=Mode.ABS):
         self.ram[address] = self.y
         
+    def asl(self, address, mode=Mode.ABS):
+        # First shift carry
+        if(mode == Mode.ACC):
+            # If the leftmost bit is 1, set carry
+            if(self.a & 0x80):
+                self.sec()
+                # Subtract so it is not rotated past 255 (8-bit computer)
+                self.a -= 0x80
+            # Rotate left
+            self.a = self.a << 1
+        
     def jmp(self, address = None, mode=Mode.ABS):
         # Note, for jmp in ABS mode, we get the memory value directly
         if not address:
@@ -277,6 +295,7 @@ class CPU():
         print(f"X: {self.x}")
         print(f"Y: {self.y}")
         print(f"PC: {self.pc}")
+        print(f"Carry: {self.c}")
         
     def tick(self):
         # Note, for this emulator, we are ignoring the timing 
@@ -313,11 +332,11 @@ if __name__ == "__main__":
     cpu.ram[34] = 0x30
     cpu.ram[35] = 0x40
 
-    cpu.ram[1024] = 0xA2 # LDX #1
+    cpu.ram[1024] = 0xA9 # LDA #1
     cpu.ram[1025] = 0x01 # 1
-    cpu.ram[1026] = 0xB5 # LDA ZP X-offset 0x20
-    cpu.ram[1027] = 0x20 # 
-    cpu.ram[1028] = 0xE8 # INX
+    cpu.ram[1026] = 0x0A # ASL
+    cpu.ram[1027] = 0xEA # NOP
+    cpu.ram[1028] = 0xEA # NOP
     
     cpu.ram[1029] = 0xEA # NOP
     cpu.ram[1030] = 0xEA # NOP
@@ -337,7 +356,7 @@ if __name__ == "__main__":
     cpu.ram[1044] = 0xEA # NOP
     cpu.ram[1045] = 0xEA # NOP
     
-    cpu.ram[1046] = 0x4C # JMP 0x0400 (1027)
+    cpu.ram[1046] = 0x4C # JMP 0x0402 (1026)
     cpu.ram[1047] = 0x02
     cpu.ram[1048] = 0x04
     

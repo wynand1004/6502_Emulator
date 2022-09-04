@@ -284,7 +284,7 @@ class CPU():
             # Rotate left
             self.a = self.a << 1
             
-        if(mode == Mode.ZP):
+        elif(mode == Mode.ZP):
             value = self.ram[address]
             # If the leftmost bit is 1, set carry
             if(value & 0x80):
@@ -293,6 +293,36 @@ class CPU():
                 self.ram[address] -= 0x80
             # Rotate left
             self.ram[address] = self.ram[address] << 1            
+
+        elif(mode == Mode.ZPX):
+            value = self.ram[address + self.x] 
+            # If the leftmost bit is 1, set carry
+            if(value & 0x80):
+                self.sec()
+                # Subtract so it is not rotated past 255 (8-bit computer)
+                self.ram[address] -= 0x80
+            # Rotate left
+            self.ram[address+self.x] = self.ram[address+self.x] << 1 
+
+        elif(mode == Mode.ABS):
+            value = self.ram[address]
+            # If the leftmost bit is 1, set carry
+            if(value & 0x80):
+                self.sec()
+                # Subtract so it is not rotated past 255 (8-bit computer)
+                self.ram[address] -= 0x80
+            # Rotate left
+            self.ram[address] = self.ram[address] << 1   
+
+        elif(mode == Mode.ABX):
+            value = self.ram[address + self.x] 
+            # If the leftmost bit is 1, set carry
+            if(value & 0x80):
+                self.sec()
+                # Subtract so it is not rotated past 255 (8-bit computer)
+                self.ram[address] -= 0x80
+            # Rotate left
+            self.ram[address+self.x] = self.ram[address+self.x] << 1 
         
     def jmp(self, address = None, mode=Mode.ABS):
         # Note, for jmp in ABS mode, we get the memory value directly

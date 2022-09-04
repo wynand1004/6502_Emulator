@@ -154,7 +154,7 @@ class CPU():
             return self.pc + 1
             
         elif(mode == Mode.ZP):
-            address = ram[self.pc + 1]
+            address = self.ram[self.pc + 1]
             if address > 255:
                 address -= 256
             return address
@@ -283,6 +283,16 @@ class CPU():
                 self.a -= 0x80
             # Rotate left
             self.a = self.a << 1
+            
+        if(mode == Mode.ZP):
+            value = self.ram[address]
+            # If the leftmost bit is 1, set carry
+            if(value & 0x80):
+                self.sec()
+                # Subtract so it is not rotated past 255 (8-bit computer)
+                self.ram[address] -= 0x80
+            # Rotate left
+            self.ram[address] = self.ram[address] << 1            
         
     def jmp(self, address = None, mode=Mode.ABS):
         # Note, for jmp in ABS mode, we get the memory value directly
@@ -334,13 +344,12 @@ if __name__ == "__main__":
 
     cpu.ram[1024] = 0xA9 # LDA #1
     cpu.ram[1025] = 0x01 # 1
-    cpu.ram[1026] = 0x0A # ASL
-    cpu.ram[1027] = 0xEA # NOP
-    cpu.ram[1028] = 0xEA # NOP
-    
-    cpu.ram[1029] = 0xEA # NOP
-    cpu.ram[1030] = 0xEA # NOP
-    cpu.ram[1031] = 0xEA # NOP
+    cpu.ram[1026] = 0x85 # STA 0x20 (ZP)
+    cpu.ram[1027] = 0x20 # 
+    cpu.ram[1028] = 0x06 # ASL 0x20 (ZP)
+    cpu.ram[1029] = 0x20 # 
+    cpu.ram[1030] = 0xA5 # LDA 0x20 (ZP)
+    cpu.ram[1031] = 0x20 # NOP
     cpu.ram[1032] = 0xEA # NOP
     cpu.ram[1033] = 0xEA # NOP
     cpu.ram[1034] = 0xEA # NOP
@@ -356,7 +365,7 @@ if __name__ == "__main__":
     cpu.ram[1044] = 0xEA # NOP
     cpu.ram[1045] = 0xEA # NOP
     
-    cpu.ram[1046] = 0x4C # JMP 0x0402 (1026)
+    cpu.ram[1046] = 0x4C # JMP 0x0402
     cpu.ram[1047] = 0x02
     cpu.ram[1048] = 0x04
     
